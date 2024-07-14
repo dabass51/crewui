@@ -69,6 +69,7 @@ const NodeComponent = ({ id, data, selected }: NodeProps<Node>) => {
 
     return (
         <div
+            // @ts-ignore
             className={`p-2 rounded ${colorMap[data.type as string]} ${borderStyle} transition-all duration-200 cursor-pointer`}
             onClick={handleClick}
         >
