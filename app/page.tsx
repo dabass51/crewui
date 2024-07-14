@@ -32,6 +32,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type NodeType = 'agent' | 'task' | 'crew';
 
+interface NodeData {
+    type: NodeType;
+    name: string;
+    role?: string;
+    goal?: string;
+    backstory?: string;
+    tools: string[];
+    description?: string;
+    expectedOutput?: string;
+}
+
 interface FormData {
     type?: NodeType;
     name?: string;
@@ -44,11 +55,11 @@ interface FormData {
 }
 
 interface Model {
-    nodes: Node<Node>[];
+    nodes: Node<NodeData>[];
     edges: Edge[];
 }
 
-const NodeComponent = ({ id, data, selected }: NodeProps<Node>) => {
+const NodeComponent = ({ id, data, selected }: NodeProps<NodeData>) => {
     const { setNodes } = useReactFlow();
     const colorMap: Record<NodeType, string> = {
         agent: 'bg-blue-100',
@@ -69,7 +80,6 @@ const NodeComponent = ({ id, data, selected }: NodeProps<Node>) => {
 
     return (
         <div
-            // @ts-ignore
             className={`p-2 rounded ${colorMap[data.type as string]} ${borderStyle} transition-all duration-200 cursor-pointer`}
             onClick={handleClick}
         >
@@ -140,7 +150,7 @@ const predefinedTools = [
 ];
 
 const CrewAIBuilder = () => {
-    const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+    const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [formType, setFormType] = useState<NodeType | null>(null);
     const [formData, setFormData] = useState<FormData>({ tools: [] });
@@ -150,8 +160,7 @@ const CrewAIBuilder = () => {
     const [pythonPreview, setPythonPreview] = useState('');
 
     const updateDataModel = useCallback(() => {
-        // @ts-ignore
-        const model:Model = {
+        const model:{ nodes: { data: Record<string, unknown>; id: string; type: string }[]; edges: any[] } = {
             nodes: nodes.map(node => ({
                 id: node.id,
                 type: node.type,
@@ -163,7 +172,10 @@ const CrewAIBuilder = () => {
         updatePythonPreview(model);
     }, [nodes, edges]);
 
-    const updatePythonPreview = useCallback((model: { nodes: Node<NodeData>[]; edges: Edge[]; }) => {
+    const updatePythonPreview = useCallback((model: {
+        nodes: { data: Record<string, unknown>; id: string; type: string }[];
+        edges: any[]
+    }) => {
         let preview = 'from crewai import Agent, Task, Crew\n\n';
 
         // Create agents
@@ -222,7 +234,7 @@ const CrewAIBuilder = () => {
     }, [nodes, setEdges]);
 
     const onNodesDelete = useCallback(
-        (deleted: Node<Node>[]) => {
+        (deleted: Node<NodeData>[]) => {
             setEdges(
                 deleted.reduce((acc, node) => {
                     const incomers = getIncomers(node, nodes, edges);
@@ -251,7 +263,7 @@ const CrewAIBuilder = () => {
     const handleAddNode = () => {
         if (formType) {
             // @ts-ignore
-            const newNode: Node<Node> = {
+            const newNode: Node<NodeData> = {
                 id: `${formType}-${Date.now()}`,
                 type: formType,
                 position: { x: Math.random() * 300, y: Math.random() * 300 },
