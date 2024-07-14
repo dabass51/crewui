@@ -32,19 +32,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type NodeType = 'agent' | 'task' | 'crew';
 
-interface NodeData {
-    id: string;
-    type: NodeType;
-    data: NodeData
-    name: string;
-    role?: string;
-    goal?: string;
-    backstory?: string;
-    tools?: string[];
-    description?: string;
-    expectedOutput?: string;
-}
-
 interface FormData {
     type?: NodeType;
     name?: string;
@@ -57,11 +44,11 @@ interface FormData {
 }
 
 interface Model {
-    nodes: Node<NodeData>[];
+    nodes: Node<Node>[];
     edges: Edge[];
 }
 
-const NodeComponent = ({ id, data, selected }: NodeProps<NodeData>) => {
+const NodeComponent = ({ id, data, selected }: NodeProps<Node>) => {
     const { setNodes } = useReactFlow();
     const colorMap: Record<NodeType, string> = {
         agent: 'bg-blue-100',
@@ -152,7 +139,7 @@ const predefinedTools = [
 ];
 
 const CrewAIBuilder = () => {
-    const [nodes, setNodes, onNodesChange] = useNodesState([]);
+    const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [formType, setFormType] = useState<NodeType | null>(null);
     const [formData, setFormData] = useState<FormData>({ tools: [] });
@@ -162,6 +149,7 @@ const CrewAIBuilder = () => {
     const [pythonPreview, setPythonPreview] = useState('');
 
     const updateDataModel = useCallback(() => {
+        // @ts-ignore
         const model:Model = {
             nodes: nodes.map(node => ({
                 id: node.id,
@@ -233,7 +221,7 @@ const CrewAIBuilder = () => {
     }, [nodes, setEdges]);
 
     const onNodesDelete = useCallback(
-        (deleted: Node<NodeData>[]) => {
+        (deleted: Node<Node>[]) => {
             setEdges(
                 deleted.reduce((acc, node) => {
                     const incomers = getIncomers(node, nodes, edges);
@@ -261,7 +249,8 @@ const CrewAIBuilder = () => {
 
     const handleAddNode = () => {
         if (formType) {
-            const newNode: Node<NodeData> = {
+            // @ts-ignore
+            const newNode: Node<Node> = {
                 id: `${formType}-${Date.now()}`,
                 type: formType,
                 position: { x: Math.random() * 300, y: Math.random() * 300 },
@@ -293,6 +282,7 @@ const CrewAIBuilder = () => {
 
     const handleToolChange = useCallback((tool: string) => {
         setFormData(prev => {
+            // @ts-ignore
             const updatedTools = prev.tools?.includes(tool)
                 ? prev.tools.filter(t => t !== tool)
                 : [...(prev.tools || []), tool];
@@ -333,10 +323,12 @@ const CrewAIBuilder = () => {
     };
 
     useEffect(() => {
-        const selectedNode = nodes.find((node) => node.selected);
+        const selectedNode:Node | undefined = nodes.find((node) => node.selected);
         if (selectedNode) {
             setEditingNodeId(selectedNode.id);
+            // @ts-ignore
             setFormData(selectedNode.data);
+            // @ts-ignore
             setFormType(selectedNode.data.type);
         } else {
             setEditingNodeId(null);
@@ -457,7 +449,7 @@ const CrewAIBuilder = () => {
                         {!editingNodeId && (
                             <div className="space-y-2 mb-4">
                                 {(['crew', 'agent', 'task']).map((type) => (
-                                    <Button key={type} onClick={() => setFormType(type)} className="w-full">
+                                    <Button key={type} onClick={() => setFormType(type as NodeType)} className="w-full">
                                         <PlusCircle className="mr-2 h-4 w-4" /> Add {type.charAt(0).toUpperCase() + type.slice(1)}
                                     </Button>
                                 ))}
