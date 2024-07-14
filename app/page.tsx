@@ -69,7 +69,7 @@ const NodeComponent = ({ id, data, selected }: NodeProps<Node>) => {
 
     return (
         <div
-            className={`p-2 rounded ${colorMap[data.type]} ${borderStyle} transition-all duration-200 cursor-pointer`}
+            className={`p-2 rounded ${colorMap[data.type as string]} ${borderStyle} transition-all duration-200 cursor-pointer`}
             onClick={handleClick}
         >
             {data.type !== 'crew' && <Handle type="target" position={Position.Left} />}
